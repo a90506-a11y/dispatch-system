@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>派工系統</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+
+        .nav {
+            margin-bottom: 15px;
+        }
+
+        .nav a {
+            margin-right: 12px;
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .leave-box {
+            background: #fff3cd;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ffeeba;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-delete {
+            color: red;
+            margin-left: 8px;
+        }
+
+        .calendar-title {
+            margin-top: 40px;
+        }
+
+        .weekend {
+            background-color: #f2f2f2;
+        }
+
+        .has-order {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+
+<h2>📋 派工列表</h2>
+
+<div class="nav">
+    <a href="/create/">➕ 新增派工</a>
+    <a href="/leave/create/">📝 申請休假</a>
+    <a href="/calendar/">📅 休假總覽</a>
+    <a href="/my-leaves/">📄 我的休假</a>
+
+    {% if request.user.is_staff %}
+        <a href="/leave/approval/">🧑‍💼 審核休假</a>
+    {% endif %}
+</div>
+
+<form method="get">
+    選擇日期：
+    <input type="date" name="date" value="{{ selected_date }}">
+    <button type="submit">查詢</button>
+</form>
+
+<!-- 🔥 休假 -->
+<div class="leave-box">
+    <h3>🚫 休假人員</h3>
+
+    <ul>
+    {% for l in leaves %}
+        <li>
+            {{ l.engineer.name }}（{{ l.get_period_display }}）
+
+            {% if l.engineer.user == request.user and l.status == 'pending' %}
+                <a href="/leave/delete/{{ l.id }}/"
+                   class="btn-delete"
+                   onclick="return confirm('確定要刪除這筆休假申請嗎？');">
+                   ❌刪除
+                </a>
+            {% endif %}
+
+            {% if l.reason %}
+                - {{ l.reason }}
+            {% endif %}
+        </li>
+    {% empty %}
+        <li>這天沒有人休假 👍</li>
+    {% endfor %}
+    </ul>
+</div>
+
+<!-- 🔥 派工 -->
+<table>
+    <tr>
+        <th>日期</th>
+        <th>客戶</th>
+        <th>電話</th>
+        <th>工程師</th>
+        <th>內容</th>
+        <th>操作</th>
+    </tr>
+
+    {% for o in orders %}
+    <tr>
+        <td>{{ o.date }}</td>
+        <td>{{ o.customer_name }}</td>
+        <td>{{ o.customer_phone }}</td>
+        <td>
+            {% for e in o.engineers.all %}
+                {{ e.name }}
+            {% endfor %}
+        </td>
+        <td>{{ o.description }}</td>
+        <td>
+            <a href="/update/{{ o.id }}/">✏ 修改</a>
+            <a href="/delete/{{ o.id }}/"
+               class="btn-delete"
+               onclick="return confirm('確定要刪除這筆派工嗎？');">
+               🗑 刪除
+            </a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="6">這天沒有派工</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<!-- 🔥 月曆 -->
+<h3 class="calendar-title">📅 月曆檢視</h3>
+
+<table>
+    <tr>
+        <th>一</th>
+        <th>二</th>
+        <th>三</th>
+        <th>四</th>
+        <th>五</th>
+        <th>六</th>
+        <th>日</th>
+    </tr>
+
+    {% for week in calendar %}
+    <tr>
+        {% for day in week %}
+        <td class="{% if day in holidays or forloop.counter0 == 5 or forloop.counter0 == 6 %}weekend{% endif %}"
+            style="vertical-align: top; height:100px; width:14%;">
+            
+            {% if day != 0 %}
+                <strong class="{% if day in orders_by_day %}has-order{% endif %}">
+    <a href="?date={{ year }}-{{ month|stringformat:'02d' }}-{{ day|stringformat:'02d' }}">
+        {{ day }}
+    </a>
+</strong><br>
+                <!-- 🔥 假日名稱 -->
+{% for d, name in holiday_names.items %}
+    {% if d == day %}
+        <div style="font-size:18px; color:red;">
+            {{ name }}
+        </div>
+    {% endif %}
+{% endfor %}
+
+                {% for d, customers in orders_by_day.items %}
+                    {% if d == day %}
+                        {% for c in customers %}
+                            <div style="font-size:18px; font-weight:500;">
+                                {{ c }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+
+            {% endif %}
+        </td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>

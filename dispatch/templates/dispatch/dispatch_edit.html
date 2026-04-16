@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>修改派工日期</title>
+</head>
+<body>
+
+<h2>✏ 修改派工日期</h2>
+
+<p>客戶：{{ order.customer_name }}</p>
+<p>目前日期：{{ order.date }}</p>
+
+<form method="post">
+    {% csrf_token %}
+
+    新日期：<br>
+    <input type="date" name="date" value="{{ order.date }}"><br><br>
+
+    <button type="submit">儲存</button>
+</form>
+
+<br>
+<a href="/">← 返回首頁</a>
+
+</body>
+</html>

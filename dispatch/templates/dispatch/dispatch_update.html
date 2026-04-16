@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>修改派工</title>
+</head>
+<body>
+
+<h2>✏ 修改派工</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    日期：<br>
+    <input type="date" name="date" value="{{ order.date|date:'Y-m-d' }}"><br>
+
+    客戶名稱：<br>
+    <input type="text" name="customer_name" value="{{ order.customer_name }}"><br>
+
+    聯絡人：<br>
+    <input type="text" name="contact_person" value="{{ order.contact_person }}"><br>
+
+    客戶電話：<br>
+    <input type="text" name="customer_phone" value="{{ order.customer_phone }}"><br>
+
+    工作內容：<br>
+    <textarea name="description">{{ order.description }}</textarea><br>
+
+    工程師：<br>
+   {% for e in engineers %}
+    <label>
+        <input type="checkbox" name="engineers" value="{{ e.id }}"
+        {% if e in order.engineers.all %}checked{% endif %}>
+        {{ e.name }}
+    </label><br>
+{% endfor %}
+    </select><br><br>
+
+    <button type="submit">儲存</button>
+</form>
+
+<br>
+<a href="/">← 返回首頁</a>
+
+</body>
+</html>

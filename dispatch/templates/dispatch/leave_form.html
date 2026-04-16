@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>申請休假</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+
+        input, select, textarea {
+            width: 300px;
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+
+        button {
+            padding: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+        }
+
+        a {
+            display: inline-block;
+            margin-bottom: 15px;
+            text-decoration: none;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+<h2>📅 申請休假</h2>
+
+<!-- 🔥 返回 -->
+<a href="/">← 返回首頁</a>
+
+<form method="post">
+    {% csrf_token %}
+
+    <!-- 🔥 顯示自己（不能改） -->
+    <p>申請人：{{ engineer_name }}</p>
+
+    日期：<br>
+    <input type="date" name="date"><br>
+
+    時段：<br>
+    <select name="period">
+        <option value="morning">上午</option>
+        <option value="afternoon">下午</option>
+        <option value="full">全天</option>
+    </select><br>
+
+    原因：<br>
+    <textarea name="reason"></textarea><br>
+
+    <button type="submit">送出申請</button>
+</form>
+
+</body>
+</html>

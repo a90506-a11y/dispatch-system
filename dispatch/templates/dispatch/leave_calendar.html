@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>休假日曆</title>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: white;
+        }
+
+        td, th {
+            border: 1px solid #ddd;
+            width: 14%;
+            height: 100px;
+            vertical-align: top;
+            padding: 8px;
+        }
+
+        th {
+            background: #343a40;
+            color: white;
+            font-weight: normal;
+        }
+
+        .day {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .leave {
+            font-size: 12px;
+            background: #ffe5e5;
+            color: #d9534f;
+            padding: 2px 4px;
+            margin-bottom: 2px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<h2>📅 休假日曆</h2>
+
+<a href="/">← 回派工</a>
+
+<table>
+    <tr>
+        <th>一</th>
+        <th>二</th>
+        <th>三</th>
+        <th>四</th>
+        <th>五</th>
+        <th>六</th>
+        <th>日</th>
+    </tr>
+
+    {% for week in calendar %}
+    <tr>
+        {% for day in week %}
+        <td>
+            {% if day != 0 %}
+                <div class="day">{{ day }}</div>
+
+                {% for l in leaves %}
+                    {% if l.date.day == day %}
+                        <div class="leave">
+                            {{ l.engineer.name }} ({{ l.get_period_display }})
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>

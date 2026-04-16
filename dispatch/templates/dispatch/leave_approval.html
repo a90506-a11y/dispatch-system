@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>休假審核</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        th {
+            background-color: #333;
+            color: white;
+        }
+
+        .approve {
+            color: green;
+            margin-right: 10px;
+        }
+
+        .reject {
+            color: red;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .calendar td {
+            height: 80px;
+            text-align: center;
+            vertical-align: top;
+        }
+
+        .weekend {
+            background-color: #f5f5f5;
+        }
+
+        .today {
+            background-color: #fff3cd; /* 鵝黃色 */
+            font-weight: bold;
+        }
+
+        .leave-dot {
+            color: red;
+            font-size: 12px;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>🧑‍💼 休假審核</h2>
+
+<a href="/">← 返回首頁</a>
+
+<!-- 🔥 審核表 -->
+<table>
+    <tr>
+        <th>日期</th>
+        <th>工程師</th>
+        <th>時段</th>
+        <th>原因</th>
+        <th>操作</th>
+    </tr>
+
+    {% for l in leaves %}
+    <tr>
+        <td>{{ l.date }}</td>
+        <td>{{ l.engineer.name }}</td>
+        <td>{{ l.get_period_display }}</td>
+        <td>{{ l.reason }}</td>
+        <td>
+            <a class="approve" href="/leave/approve/{{ l.id }}/">✔ 核准</a>
+            <a class="reject" href="/leave/reject/{{ l.id }}/">✖ 駁回</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="5">目前沒有待審核</td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+<!-- 🔥 月曆 -->
+<h3 style="margin-top:40px;">📅 月曆檢視</h3>
+
+<div style="margin-bottom:10px;">
+    <a href="?year={{ year }}&month={{ month|add:-1 }}">⬅ 上月</a>
+    |
+    <strong>{{ year }} 年 {{ month }} 月</strong>
+    |
+    <a href="?year={{ year }}&month={{ month|add:1 }}">下月 ➡</a>
+</div>
+
+<table class="calendar">
+    <tr>
+        <th>一</th>
+        <th>二</th>
+        <th>三</th>
+        <th>四</th>
+        <th>五</th>
+        <th>六</th>
+        <th>日</th>
+    </tr>
+
+    {% for week in calendar %}
+    <tr>
+        {% for day in week %}
+        <td class="
+    {% if forloop.counter0 == 5 or forloop.counter0 == 6 %}
+        weekend
+    {% endif %}
+    {% if day in holidays %}
+        weekend
+    {% endif %}
+    {% if year == today.year and month == today.month and day == today.day %}
+        today
+    {% endif %}
+">
+
+
+            {% if day != 0 %}
+                {{ day }}
+
+                {% if day in leave_days %}
+                    <div class="leave-dot">●</div>
+                {% endif %}
+            {% endif %}  <!-- ⭐ 你少的就是這一行 -->
+
+        </td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>

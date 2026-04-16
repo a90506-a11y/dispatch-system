@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>休假總覽</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        th {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<h2>📅 休假總覽</h2>
+
+<a href="/">← 回派工</a>
+
+<table>
+    <tr>
+        <th>日期</th>
+        <th>工程師</th>
+        <th>時段</th>
+        <th>原因</th>
+    </tr>
+
+    {% for l in leaves %}
+    <tr>
+        <td>{{ l.date }}</td>
+        <td>{{ l.engineer.name }}</td>
+        <td>{{ l.get_period_display }}</td>
+        <td>{{ l.reason }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>
