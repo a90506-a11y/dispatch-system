@@ -19,42 +19,39 @@ def dispatch_list(request):
         selected_date_obj = date.today()
         selected_date = selected_date_obj.strftime('%Y-%m-%d')
 
-    # 🔥 當天資料
-    orders = DispatchOrder.objects.filter(date=selected_date_obj)
+    # ✅ 時間排序
+    orders = DispatchOrder.objects.filter(date=selected_date_obj).order_by('scheduled_time')
+
     leaves = Leave.objects.filter(
         date=selected_date_obj,
         status='approved'
     )
 
-    # 🔥 月曆
+    # 📅 月曆
     year = selected_date_obj.year
     month = selected_date_obj.month
     cal = calendar.monthcalendar(year, month)
 
-    # 🔥 每天派工整理
+    # 📦 月份派工
     orders_by_day = {}
     month_orders = DispatchOrder.objects.filter(
         date__year=year,
         date__month=month
-    )
+    ).order_by('scheduled_time')
 
     for o in month_orders:
         day = o.date.day
         if day not in orders_by_day:
             orders_by_day[day] = []
-        orders_by_day[day].append(o.customer_name)
+        orders_by_day[day].append(o)
 
-    # 🔥 台灣假日
+    # 🇹🇼 假日
     tw_holidays = holidays.Taiwan(years=year, language='zh_TW')
 
     holidays_list = []
     holiday_names = {}
 
     for d, name in tw_holidays.items():
-        if d.month == month:
-            holidays_list.append(d.day)
-            holiday_names[d.day] = name
-   
         if d.month == month:
             holidays_list.append(d.day)
             holiday_names[d.day] = name
@@ -67,7 +64,7 @@ def dispatch_list(request):
         'orders_by_day': orders_by_day,
         'holidays': holidays_list,
         'holiday_names': holiday_names,
-        'year': year, 
+        'year': year,
         'month': month,
     })
 
@@ -116,6 +113,7 @@ def dispatch_create(request):
         'today': today
     })
 
+
 # ✏ 修改派工
 @login_required
 def dispatch_update(request, order_id):
@@ -142,6 +140,7 @@ def dispatch_update(request, order_id):
         'order': order,
         'engineers': engineers,
     })
+
 
 # ❌ 刪除派工
 @login_required
@@ -244,7 +243,6 @@ def is_manager(user):
 def leave_approval(request):
     leaves = Leave.objects.filter(status='pending').order_by('date')
 
-    # 🔥 取得切換月份
     year = request.GET.get('year')
     month = request.GET.get('month')
 
@@ -256,10 +254,8 @@ def leave_approval(request):
         year = today.year
         month = today.month
 
-    # 🔥 月曆
     cal = calendar.monthcalendar(year, month)
 
-    # 🔥 該月份休假
     month_leaves = Leave.objects.filter(
         date__year=year,
         date__month=month
@@ -267,10 +263,8 @@ def leave_approval(request):
 
     leave_days = [l.date.day for l in month_leaves]
 
-    # 🔥 今天
     today = datetime.today().date()
 
-    # 🔥 國定假日
     tw_holidays = holidays.Taiwan(years=year, language='zh_TW')
     holidays_list = [d.day for d in tw_holidays if d.month == month]
 
@@ -283,6 +277,7 @@ def leave_approval(request):
         'today': today,
         'holidays': holidays_list,
     })
+
 
 # ✔ 核准
 @user_passes_test(is_manager)

@@ -85,18 +85,7 @@
     {% for l in leaves %}
         <li>
             {{ l.engineer.name }}（{{ l.get_period_display }}）
-
-            {% if l.engineer.user == request.user and l.status == 'pending' %}
-                <a href="/leave/delete/{{ l.id }}/"
-                   class="btn-delete"
-                   onclick="return confirm('確定要刪除這筆休假申請嗎？');">
-                   ❌刪除
-                </a>
-            {% endif %}
-
-            {% if l.reason %}
-                - {{ l.reason }}
-            {% endif %}
+            {% if l.reason %} - {{ l.reason }}{% endif %}
         </li>
     {% empty %}
         <li>這天沒有人休假 👍</li>
@@ -108,24 +97,40 @@
 <table>
     <tr>
         <th>日期</th>
+        <th>時間</th>
         <th>客戶</th>
         <th>電話</th>
         <th>工程師</th>
         <th>內容</th>
+        <th>備註</th>
         <th>操作</th>
     </tr>
 
     {% for o in orders %}
     <tr>
         <td>{{ o.date }}</td>
+
+        <td>
+            {% if o.scheduled_time %}
+                {{ o.scheduled_time|date:"H:i" }}
+            {% else %}
+                -
+            {% endif %}
+        </td>
+
         <td>{{ o.customer_name }}</td>
         <td>{{ o.customer_phone }}</td>
+
         <td>
             {% for e in o.engineers.all %}
                 {{ e.name }}
             {% endfor %}
         </td>
+
         <td>{{ o.description }}</td>
+
+        <td>{{ o.note|default:"-" }}</td>
+
         <td>
             <a href="/update/{{ o.id }}/">✏ 修改</a>
             <a href="/delete/{{ o.id }}/"
@@ -137,7 +142,7 @@
     </tr>
     {% empty %}
     <tr>
-        <td colspan="6">這天沒有派工</td>
+        <td colspan="8">這天沒有派工</td>
     </tr>
     {% endfor %}
 </table>
@@ -161,33 +166,29 @@
         {% for day in week %}
         <td class="{% if day in holidays or forloop.counter0 == 5 or forloop.counter0 == 6 %}weekend{% endif %}"
             style="vertical-align: top; height:100px; width:14%;">
-            
-            {% if day != 0 %}
-                <strong class="{% if day in orders_by_day %}has-order{% endif %}">
-    <a href="?date={{ year }}-{{ month|stringformat:'02d' }}-{{ day|stringformat:'02d' }}">
-        {{ day }}
-    </a>
-</strong><br>
-                <!-- 🔥 假日名稱 -->
-{% for d, name in holiday_names.items %}
-    {% if d == day %}
-        <div style="font-size:18px; color:red;">
-            {{ name }}
-        </div>
-    {% endif %}
-{% endfor %}
 
-                {% for d, customers in orders_by_day.items %}
+            {% if day != 0 %}
+                <strong>
+                    <a href="?date={{ year }}-{{ month|stringformat:'02d' }}-{{ day|stringformat:'02d' }}">
+                        {{ day }}
+                    </a>
+                </strong><br>
+
+                {% for d, day_orders in orders_by_day.items %}
                     {% if d == day %}
-                        {% for c in customers %}
-                            <div style="font-size:18px; font-weight:500;">
-                                {{ c }}
+                        {% for o in day_orders %}
+                            <div style="font-size:13px;">
+                                {% if o.scheduled_time %}
+                                    {{ o.scheduled_time|date:"H:i" }}
+                                {% endif %}
+                                {{ o.customer_name }}
                             </div>
                         {% endfor %}
                     {% endif %}
                 {% endfor %}
 
             {% endif %}
+
         </td>
         {% endfor %}
     </tr>
