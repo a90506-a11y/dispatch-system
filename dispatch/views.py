@@ -75,8 +75,10 @@ def dispatch_create(request):
         time_str = request.POST.get('scheduled_time')
 
         scheduled_time = None
-        if time_str:
-            scheduled_time = datetime.strptime(time_str, "%H:%M").time()
+        if time_str and len(time_str) == 4 and time_str.isdigit():
+            hour = int(time_str[:2])
+            minute = int(time_str[2:])
+            scheduled_time = datetime.strptime(f"{hour}:{minute}", "%H:%M").time()
 
         note = request.POST.get('note') or ''
 
@@ -123,10 +125,12 @@ def dispatch_update(request, order_id):
 
     if request.method == 'POST':
         order.date = request.POST.get('date')
-        time_str = request.POST.get('scheduled_time')
 
-        if time_str:
-            order.scheduled_time = datetime.strptime(time_str, "%H:%M").time()
+        time_str = request.POST.get('scheduled_time')
+        if time_str and len(time_str) == 4 and time_str.isdigit():
+            hour = int(time_str[:2])
+            minute = int(time_str[2:])
+            order.scheduled_time = datetime.strptime(f"{hour}:{minute}", "%H:%M").time()
         else:
             order.scheduled_time = None
 

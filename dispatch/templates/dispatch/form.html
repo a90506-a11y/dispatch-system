@@ -1,11 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>新增派工</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+
+        input, textarea {
+            width: 300px;
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+
+        button {
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+        }
+
+        a {
+            display: inline-block;
+            margin-bottom: 15px;
+            text-decoration: none;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+<h2>➕ 新增派工</h2>
+
+<!-- ✅ 返回鍵（你剛剛少這個） -->
+<a href="/">← 返回首頁</a>
+
 <form method="post">
     {% csrf_token %}
 
     日期：<br>
     <input type="date" name="date" value="{{ today }}"><br>
 
-    指定時間：<br>
-    <input type="time" name="scheduled_time" step="600"><br><br>
+    <!-- ✅ 說明寫清楚 -->
+    指定時間（例：12點30分請填 1230）：<br>
+    <input type="text" name="scheduled_time" placeholder="例如 1230"><br><br>
 
     客戶名稱：<br>
     <input type="text" name="customer_name"><br>
@@ -36,3 +72,6 @@
 
     <button type="submit">送出</button>
 </form>
+
+</body>
+</html>

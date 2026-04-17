@@ -14,9 +14,7 @@
     <input type="date" name="date" value="{{ order.date|date:'Y-m-d' }}"><br><br>
 
     指定時間：<br>
-    <input type="time" name="scheduled_time"
-       value="{{ order.scheduled_time|time:'H:i' }}"
-       step="600"><br><br>
+    <input type="text" name="scheduled_time" placeholder="例如 1230"><br><br>
 
     客戶名稱：<br>
     <input type="text" name="customer_name" value="{{ order.customer_name }}"><br>
