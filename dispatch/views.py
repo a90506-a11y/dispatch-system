@@ -184,15 +184,37 @@ def leave_calendar(request):
 @login_required
 def leave_create(request):
 
+    try:
+        engineer = Engineer.objects.get(user=request.user)
+    except Engineer.DoesNotExist:
+        return HttpResponseForbidden("你沒有對應的工程師資料")
+
+    # ⭐ 計算年假
+    approved_leaves = Leave.objects.filter(engineer=engineer, status='approved')
+    used_days = sum(l.days for l in approved_leaves)
+    total_days = engineer.get_annual_leave()
+    remaining_days = total_days - used_days
+
     if request.method == 'POST':
         date_value = request.POST.get('date')
         period = request.POST.get('period')
         reason = request.POST.get('reason')
 
-        try:
-            engineer = Engineer.objects.get(user=request.user)
-        except Engineer.DoesNotExist:
-            return HttpResponseForbidden("你沒有對應的工程師資料")
+        # ⭐ 計算這次請假天數
+        if period == 'full':
+            request_days = 1
+        else:
+            request_days = 0.5
+
+        # ❌ 如果超過剩餘 → 不給請
+        if request_days > remaining_days:
+            return render(request, 'dispatch/leave_form.html', {
+                'error': '剩餘假不足，無法申請',
+                'engineer_name': engineer.name,
+                'used_days': used_days,
+                'remaining_days': remaining_days,
+                'total_days': total_days,
+            })
 
         Leave.objects.create(
             engineer=engineer,
@@ -204,16 +226,12 @@ def leave_create(request):
 
         return redirect('/calendar/')
 
-    try:
-        engineer = Engineer.objects.get(user=request.user)
-        engineer_name = engineer.name
-    except Engineer.DoesNotExist:
-        engineer_name = request.user.username
-
     return render(request, 'dispatch/leave_form.html', {
-        'engineer_name': engineer_name
+        'engineer_name': engineer.name,
+        'used_days': used_days,
+        'remaining_days': remaining_days,
+        'total_days': total_days,
     })
-
 
 # ❌ 刪除休假
 @login_required

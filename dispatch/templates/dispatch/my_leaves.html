@@ -23,13 +23,37 @@
         .approved { color: green; }
         .pending { color: orange; }
         .rejected { color: red; }
+
+        .info-box {
+            background:#e9f7ef;
+            padding:10px;
+            margin-bottom:15px;
+            border-radius:5px;
+        }
+
+        a {
+            display: inline-block;
+            margin-bottom: 15px;
+            text-decoration: none;
+            color: #007bff;
+        }
     </style>
 </head>
+
 <body>
 
 <h2>📄 我的休假紀錄</h2>
 
 <a href="/">← 返回首頁</a>
+
+<!-- ⭐ 年假統計 -->
+<h3>📊 年假狀況</h3>
+
+<div class="info-box">
+    年假總額：{{ total_days|default:"0" }} 天<br>
+    已使用：{{ used_days|default:"0" }} 天<br>
+    剩餘：{{ remaining_days|default:"0" }} 天
+</div>
 
 <table>
     <tr>
@@ -43,7 +67,7 @@
     <tr>
         <td>{{ l.date }}</td>
         <td>{{ l.get_period_display }}</td>
-        <td>{{ l.reason }}</td>
+        <td>{{ l.reason|default:"-" }}</td>
         <td>
             {% if l.status == 'approved' %}
                 <span class="approved">已核准</span>
