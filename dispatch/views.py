@@ -19,7 +19,6 @@ def dispatch_list(request):
         selected_date_obj = date.today()
         selected_date = selected_date_obj.strftime('%Y-%m-%d')
 
-    # ✅ 時間排序
     orders = DispatchOrder.objects.filter(date=selected_date_obj).order_by('scheduled_time')
 
     leaves = Leave.objects.filter(
@@ -27,12 +26,10 @@ def dispatch_list(request):
         status='approved'
     )
 
-    # 📅 月曆
     year = selected_date_obj.year
     month = selected_date_obj.month
     cal = calendar.monthcalendar(year, month)
 
-    # 📦 月份派工
     orders_by_day = {}
     month_orders = DispatchOrder.objects.filter(
         date__year=year,
@@ -45,7 +42,6 @@ def dispatch_list(request):
             orders_by_day[day] = []
         orders_by_day[day].append(o)
 
-    # 🇹🇼 假日
     tw_holidays = holidays.Taiwan(years=year, language='zh_TW')
 
     holidays_list = []
@@ -76,8 +72,13 @@ def dispatch_create(request):
 
     if request.method == 'POST':
         date_value = request.POST.get('date')
-        scheduled_time = request.POST.get('scheduled_time')
-        note = request.POST.get('note')
+        time_str = request.POST.get('scheduled_time')
+
+        scheduled_time = None
+        if time_str:
+            scheduled_time = datetime.strptime(time_str, "%H:%M").time()
+
+        note = request.POST.get('note') or ''
 
         customer_name = request.POST.get('customer_name')
         contact_person = request.POST.get('contact_person')
@@ -94,7 +95,7 @@ def dispatch_create(request):
 
         order = DispatchOrder.objects.create(
             date=date_value,
-            scheduled_time=scheduled_time if scheduled_time else None,
+            scheduled_time=scheduled_time,
             note=note,
             customer_name=customer_name,
             contact_person=contact_person,
@@ -122,8 +123,14 @@ def dispatch_update(request, order_id):
 
     if request.method == 'POST':
         order.date = request.POST.get('date')
-        order.scheduled_time = request.POST.get('scheduled_time') or None
-        order.note = request.POST.get('note')
+        time_str = request.POST.get('scheduled_time')
+
+        if time_str:
+            order.scheduled_time = datetime.strptime(time_str, "%H:%M").time()
+        else:
+            order.scheduled_time = None
+
+        order.note = request.POST.get('note') or ''
 
         order.customer_name = request.POST.get('customer_name')
         order.contact_person = request.POST.get('contact_person')

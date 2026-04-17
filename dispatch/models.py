@@ -12,7 +12,7 @@ class Engineer(models.Model):
 
 class DispatchOrder(models.Model):
     date = models.DateField()
-    scheduled_time = models.DateTimeField(null=True, blank=True, verbose_name="指定時間")
+    scheduled_time = models.TimeField(null=True, blank=True, verbose_name="指定時間")
     customer_name = models.CharField(max_length=100)
     contact_person = models.CharField(max_length=100, blank=True)
     customer_phone = models.CharField(max_length=20)
