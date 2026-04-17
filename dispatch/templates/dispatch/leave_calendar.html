@@ -3,28 +3,14 @@
 <head>
     <title>休假日曆</title>
     <style>
-        body {
-            font-family: Arial;
-            padding: 20px;
-            background: #f8f9fa;
-        }
-
-        h2 {
-            margin-bottom: 10px;
-        }
-
-        a {
-            text-decoration: none;
-            color: #007bff;
-        }
+        body { font-family: Arial; padding: 20px; }
 
         table {
             border-collapse: collapse;
             width: 100%;
-            background: white;
         }
 
-        td, th {
+        th, td {
             border: 1px solid #ddd;
             width: 14%;
             height: 100px;
@@ -33,63 +19,61 @@
         }
 
         th {
-            background: #343a40;
+            background: #333;
             color: white;
-            font-weight: normal;
         }
 
-        .day {
+        .weekend {
+            background-color: #f2f2f2;
+        }
+
+        .holiday {
+            color: red;
             font-weight: bold;
-            margin-bottom: 5px;
         }
 
         .leave {
             font-size: 12px;
             background: #ffe5e5;
-            color: #d9534f;
             padding: 2px 4px;
-            margin-bottom: 2px;
-            border-radius: 4px;
-            display: inline-block;
+            margin-top: 2px;
+            display: block;
         }
     </style>
 </head>
 <body>
 
-<h2>📅 休假日曆</h2>
+<h2>📅 {{ year }} 年 {{ month }} 月 休假日曆</h2>
 
-<a href="/">← 回派工</a>
+<a href="/">← 返回首頁</a>
 
 <table>
-    <tr>
-        <th>一</th>
-        <th>二</th>
-        <th>三</th>
-        <th>四</th>
-        <th>五</th>
-        <th>六</th>
-        <th>日</th>
-    </tr>
+<tr>
+    <th>一</th><th>二</th><th>三</th>
+    <th>四</th><th>五</th><th>六</th><th>日</th>
+</tr>
 
-    {% for week in calendar %}
-    <tr>
-        {% for day in week %}
-        <td>
-            {% if day != 0 %}
-                <div class="day">{{ day }}</div>
+{% for week in calendar %}
+<tr>
+{% for day in week %}
+<td class="{% if forloop.counter0 == 5 or forloop.counter0 == 6 %}weekend{% endif %}">
+{% if day != 0 %}
+    <div class="{% if day in holidays %}holiday{% endif %}">
+        {{ day }}
+    </div>
 
-                {% for l in leaves %}
-                    {% if l.date.day == day %}
-                        <div class="leave">
-                            {{ l.engineer.name }} ({{ l.get_period_display }})
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-        </td>
-        {% endfor %}
-    </tr>
+    {% for l in leaves %}
+        {% if l.date.day == day %}
+            <div class="leave">
+                {{ l.engineer.name }} ({{ l.get_period_display }})
+            </div>
+        {% endif %}
     {% endfor %}
+{% endif %}
+</td>
+{% endfor %}
+</tr>
+{% endfor %}
 </table>
 
 </body>

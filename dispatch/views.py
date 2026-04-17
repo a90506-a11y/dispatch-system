@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 
 from .models import DispatchOrder, Engineer, Leave
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import calendar
 import holidays
 
@@ -38,10 +38,9 @@ def dispatch_list(request):
 
     for o in month_orders:
         day = o.date.day
-        if day not in orders_by_day:
-            orders_by_day[day] = []
-        orders_by_day[day].append(o)
+        orders_by_day.setdefault(day, []).append(o)
 
+    # ⭐ 台灣假日
     tw_holidays = holidays.Taiwan(years=year, language='zh_TW')
 
     holidays_list = []
@@ -82,38 +81,22 @@ def dispatch_create(request):
 
         note = request.POST.get('note') or ''
 
-        customer_name = request.POST.get('customer_name')
-        contact_person = request.POST.get('contact_person')
-        customer_phone = request.POST.get('customer_phone')
-        description = request.POST.get('description')
-        engineer_ids = request.POST.getlist('engineers')
-
-        try:
-            my_engineer = Engineer.objects.get(user=request.user)
-            if str(my_engineer.id) not in engineer_ids:
-                engineer_ids.append(str(my_engineer.id))
-        except:
-            pass
-
         order = DispatchOrder.objects.create(
             date=date_value,
             scheduled_time=scheduled_time,
             note=note,
-            customer_name=customer_name,
-            contact_person=contact_person,
-            customer_phone=customer_phone,
-            description=description
+            customer_name=request.POST.get('customer_name'),
+            contact_person=request.POST.get('contact_person'),
+            customer_phone=request.POST.get('customer_phone'),
+            description=request.POST.get('description')
         )
 
-        order.engineers.set(engineer_ids)
-
+        order.engineers.set(request.POST.getlist('engineers'))
         return redirect('/')
-
-    today = date.today().strftime('%Y-%m-%d')
 
     return render(request, 'dispatch/form.html', {
         'engineers': engineers,
-        'today': today
+        'today': date.today().strftime('%Y-%m-%d')
     })
 
 
@@ -135,16 +118,14 @@ def dispatch_update(request, order_id):
             order.scheduled_time = None
 
         order.note = request.POST.get('note') or ''
-
         order.customer_name = request.POST.get('customer_name')
         order.contact_person = request.POST.get('contact_person')
         order.customer_phone = request.POST.get('customer_phone')
         order.description = request.POST.get('description')
 
-        engineer_ids = request.POST.getlist('engineers')
-        order.engineers.set(engineer_ids)
-
+        order.engineers.set(request.POST.getlist('engineers'))
         order.save()
+
         return redirect('/')
 
     return render(request, 'dispatch/dispatch_update.html', {
@@ -156,15 +137,15 @@ def dispatch_update(request, order_id):
 # ❌ 刪除派工
 @login_required
 def dispatch_delete(request, order_id):
-    order = get_object_or_404(DispatchOrder, id=order_id)
-    order.delete()
+    get_object_or_404(DispatchOrder, id=order_id).delete()
     return redirect('/')
 
 
-# 📅 休假日曆
+# 📅 休假日曆（完整版本）
 def leave_calendar(request):
-    year = datetime.today().year
-    month = datetime.today().month
+    today = datetime.today()
+    year = today.year
+    month = today.month
 
     cal = calendar.monthcalendar(year, month)
 
@@ -174,13 +155,19 @@ def leave_calendar(request):
         status='approved'
     )
 
+    tw_holidays = holidays.Taiwan(years=year, language='zh_TW')
+    holidays_list = [d.day for d in tw_holidays if d.month == month]
+
     return render(request, 'dispatch/leave_calendar.html', {
         'calendar': cal,
         'leaves': leaves,
+        'year': year,
+        'month': month,
+        'holidays': holidays_list,
     })
 
 
-# 📝 申請休假
+# 📝 申請休假（完整版）
 @login_required
 def leave_create(request):
 
@@ -189,25 +176,27 @@ def leave_create(request):
     except Engineer.DoesNotExist:
         return HttpResponseForbidden("你沒有對應的工程師資料")
 
-    # ⭐ 計算年假
-    approved_leaves = Leave.objects.filter(engineer=engineer, status='approved')
-    used_days = sum(l.days for l in approved_leaves)
     total_days = engineer.get_annual_leave()
-    remaining_days = total_days - used_days
+    remaining_days = engineer.get_remaining_leave()
+    used_days = total_days - remaining_days
 
     if request.method == 'POST':
-        date_value = request.POST.get('date')
+        start_date = request.POST.get('date')
+        end_date = request.POST.get('end_date') or start_date
         period = request.POST.get('period')
         reason = request.POST.get('reason')
 
-        # ⭐ 計算這次請假天數
-        if period == 'full':
-            request_days = 1
-        else:
-            request_days = 0.5
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
 
-        # ❌ 如果超過剩餘 → 不給請
-        if request_days > remaining_days:
+        total_request_days = 0
+        current = start
+
+        while current <= end:
+            total_request_days += 1 if period == 'full' else 0.5
+            current += timedelta(days=1)
+
+        if total_request_days > remaining_days:
             return render(request, 'dispatch/leave_form.html', {
                 'error': '剩餘假不足，無法申請',
                 'engineer_name': engineer.name,
@@ -216,13 +205,16 @@ def leave_create(request):
                 'total_days': total_days,
             })
 
-        Leave.objects.create(
-            engineer=engineer,
-            date=date_value,
-            period=period,
-            reason=reason,
-            status='pending'
-        )
+        current = start
+        while current <= end:
+            Leave.objects.create(
+                engineer=engineer,
+                date=current.date(),
+                period=period,
+                reason=reason,
+                status='pending'
+            )
+            current += timedelta(days=1)
 
         return redirect('/calendar/')
 
@@ -233,32 +225,41 @@ def leave_create(request):
         'total_days': total_days,
     })
 
+
 # ❌ 刪除休假
 @login_required
 def leave_delete(request, leave_id):
     leave = get_object_or_404(Leave, id=leave_id)
 
-    if not leave.engineer.user or leave.engineer.user != request.user:
-        return HttpResponseForbidden("你不能刪別人的申請")
-
-    if leave.status != 'pending':
-        return HttpResponseForbidden("已核准或駁回，不能刪除")
+    if leave.engineer.user != request.user or leave.status != 'pending':
+        return HttpResponseForbidden("不可刪除")
 
     leave.delete()
     return redirect('/')
 
 
-# 👤 我的休假
+# 👤 我的休假（完整版）
 @login_required
 def my_leaves(request):
     try:
         engineer = Engineer.objects.get(user=request.user)
+
         leaves = Leave.objects.filter(engineer=engineer).order_by('-date')
+        approved_leaves = leaves.filter(status='approved')
+
+        used_days = sum(l.days for l in approved_leaves)
+        total_days = engineer.get_annual_leave()
+        remaining_days = total_days - used_days
+
     except Engineer.DoesNotExist:
         leaves = []
+        used_days = total_days = remaining_days = 0
 
     return render(request, 'dispatch/my_leaves.html', {
-        'leaves': leaves
+        'leaves': leaves,
+        'used_days': used_days,
+        'total_days': total_days,
+        'remaining_days': remaining_days,
     })
 
 
@@ -272,27 +273,14 @@ def is_manager(user):
 def leave_approval(request):
     leaves = Leave.objects.filter(status='pending').order_by('date')
 
-    year = request.GET.get('year')
-    month = request.GET.get('month')
-
-    if year and month:
-        year = int(year)
-        month = int(month)
-    else:
-        today = datetime.today()
-        year = today.year
-        month = today.month
+    today = datetime.today()
+    year = today.year
+    month = today.month
 
     cal = calendar.monthcalendar(year, month)
 
-    month_leaves = Leave.objects.filter(
-        date__year=year,
-        date__month=month
-    )
-
+    month_leaves = Leave.objects.filter(date__year=year, date__month=month)
     leave_days = [l.date.day for l in month_leaves]
-
-    today = datetime.today().date()
 
     tw_holidays = holidays.Taiwan(years=year, language='zh_TW')
     holidays_list = [d.day for d in tw_holidays if d.month == month]
@@ -303,7 +291,7 @@ def leave_approval(request):
         'year': year,
         'month': month,
         'leave_days': leave_days,
-        'today': today,
+        'today': today.date(),
         'holidays': holidays_list,
     })
 

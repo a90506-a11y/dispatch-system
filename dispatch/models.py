@@ -7,13 +7,11 @@ class Engineer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=100)
 
-    # ⭐ 新增：到職日
     hire_date = models.DateField(null=True, blank=True, verbose_name="到職日")
 
     def __str__(self):
         return self.name
 
-    # ⭐ 新增：自動計算年假
     def get_annual_leave(self):
         if not self.hire_date:
             return 0
@@ -35,6 +33,11 @@ class Engineer(models.Model):
             return 15
         else:
             return 15 + int(years - 10)
+
+    def get_remaining_leave(self):
+        approved_leaves = self.leave_set.filter(status='approved')
+        used = sum(l.days for l in approved_leaves)
+        return self.get_annual_leave() - used
 
 
 class DispatchOrder(models.Model):
@@ -69,7 +72,6 @@ class Leave(models.Model):
     period = models.CharField(max_length=10, choices=PERIOD_CHOICES)
     reason = models.CharField(max_length=100, blank=True)
 
-    # ⭐ 新增：請假天數
     days = models.FloatField(default=0.5, verbose_name="請假天數")
 
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
@@ -77,7 +79,6 @@ class Leave(models.Model):
     def __str__(self):
         return f"{self.engineer.name} - {self.date} ({self.status})"
 
-    # ⭐ 自動計算天數
     def save(self, *args, **kwargs):
         if self.period == 'full':
             self.days = 1
