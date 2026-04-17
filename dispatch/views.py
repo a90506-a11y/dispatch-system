@@ -79,6 +79,9 @@ def dispatch_create(request):
 
     if request.method == 'POST':
         date_value = request.POST.get('date')
+        scheduled_time = request.POST.get('scheduled_time')
+        note = request.POST.get('note')
+
         customer_name = request.POST.get('customer_name')
         contact_person = request.POST.get('contact_person')
         customer_phone = request.POST.get('customer_phone')
@@ -94,6 +97,8 @@ def dispatch_create(request):
 
         order = DispatchOrder.objects.create(
             date=date_value,
+            scheduled_time=scheduled_time if scheduled_time else None,
+            note=note,
             customer_name=customer_name,
             contact_person=contact_person,
             customer_phone=customer_phone,
@@ -111,7 +116,6 @@ def dispatch_create(request):
         'today': today
     })
 
-
 # ✏ 修改派工
 @login_required
 def dispatch_update(request, order_id):
@@ -120,6 +124,9 @@ def dispatch_update(request, order_id):
 
     if request.method == 'POST':
         order.date = request.POST.get('date')
+        order.scheduled_time = request.POST.get('scheduled_time') or None
+        order.note = request.POST.get('note')
+
         order.customer_name = request.POST.get('customer_name')
         order.contact_person = request.POST.get('contact_person')
         order.customer_phone = request.POST.get('customer_phone')
@@ -130,16 +137,11 @@ def dispatch_update(request, order_id):
 
         order.save()
         return redirect('/')
-    from datetime import date
-
-    today = date.today()
 
     return render(request, 'dispatch/dispatch_update.html', {
         'order': order,
         'engineers': engineers,
-        'today': today
     })
-
 
 # ❌ 刪除派工
 @login_required

@@ -11,7 +11,11 @@
     {% csrf_token %}
 
     日期：<br>
-    <input type="date" name="date" value="{{ order.date|date:'Y-m-d' }}"><br>
+    <input type="date" name="date" value="{{ order.date|date:'Y-m-d' }}"><br><br>
+
+    指定時間：<br>
+    <input type="datetime-local" name="scheduled_time"
+           value="{{ order.scheduled_time|date:'Y-m-d\\TH:i' }}"><br><br>
 
     客戶名稱：<br>
     <input type="text" name="customer_name" value="{{ order.customer_name }}"><br>
@@ -25,16 +29,19 @@
     工作內容：<br>
     <textarea name="description">{{ order.description }}</textarea><br>
 
-    工程師：<br>
-   {% for e in engineers %}
-    <label>
-        <input type="checkbox" name="engineers" value="{{ e.id }}"
-        {% if e in order.engineers.all %}checked{% endif %}>
-        {{ e.name }}
-    </label><br>
-{% endfor %}
-    </select><br><br>
+    備註：<br>
+    <textarea name="note">{{ order.note }}</textarea><br><br>
 
+    工程師：<br>
+    {% for e in engineers %}
+        <label>
+            <input type="checkbox" name="engineers" value="{{ e.id }}"
+            {% if e in order.engineers.all %}checked{% endif %}>
+            {{ e.name }}
+        </label><br>
+    {% endfor %}
+
+    <br>
     <button type="submit">儲存</button>
 </form>
 

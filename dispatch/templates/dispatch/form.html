@@ -1,43 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>新增派工</title>
-    <style>
-        body { font-family: Arial; padding: 20px; }
-
-        input, textarea, select {
-            width: 300px;
-            margin-bottom: 10px;
-            padding: 5px;
-        }
-
-        button {
-            padding: 10px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-        }
-
-        a {
-            display: inline-block;
-            margin-bottom: 15px;
-            text-decoration: none;
-            color: #007bff;
-        }
-    </style>
-</head>
-<body>
-
-<h2>➕ 新增派工</h2>
-
-<!-- 🔥 返回鍵 -->
-<a href="/">← 返回首頁</a>
-
 <form method="post">
     {% csrf_token %}
 
     日期：<br>
     <input type="date" name="date" value="{{ today }}"><br>
+
+    指定時間：<br>
+    <input type="datetime-local" name="scheduled_time"><br><br>
 
     客戶名稱：<br>
     <input type="text" name="customer_name"><br>
@@ -51,20 +19,20 @@
     工作內容：<br>
     <textarea name="description"></textarea><br>
 
+    備註：<br>
+    <textarea name="note"></textarea><br>
+
     工程師：<br>
 
-<div style="margin-top:10px;">
-{% for e in engineers %}
-    <label style="display:flex; align-items:center; margin-bottom:8px; cursor:pointer;">
-        <input type="checkbox" name="engineers" value="{{ e.id }}"
-               style="width:auto; margin-right:8px;">
-        {{ e.name }}
-    </label>
-{% endfor %}
-</div>
+    <div style="margin-top:10px;">
+    {% for e in engineers %}
+        <label style="display:flex; align-items:center; margin-bottom:8px; cursor:pointer;">
+            <input type="checkbox" name="engineers" value="{{ e.id }}"
+                   style="width:auto; margin-right:8px;">
+            {{ e.name }}
+        </label>
+    {% endfor %}
+    </div>
 
     <button type="submit">送出</button>
 </form>
-
-</body>
-</html>

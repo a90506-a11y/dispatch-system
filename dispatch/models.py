@@ -12,10 +12,12 @@ class Engineer(models.Model):
 
 class DispatchOrder(models.Model):
     date = models.DateField()
+    scheduled_time = models.DateTimeField(null=True, blank=True, verbose_name="指定時間")
     customer_name = models.CharField(max_length=100)
     contact_person = models.CharField(max_length=100, blank=True)
     customer_phone = models.CharField(max_length=20)
     description = models.TextField()
+    note = models.TextField(blank=True, null=True, verbose_name="備註")
     engineers = models.ManyToManyField(Engineer)
 
     def __str__(self):
